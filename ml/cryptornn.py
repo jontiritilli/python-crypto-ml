@@ -36,4 +36,10 @@ main_df.dropna(inplace=True)
 main_df['future'] = main_df[f'{RATIO_TO_PREDICT}_close'].shift(-FUTURE_PERIOD_PREDICT)
 main_df['target'] = list(map(classify, main_df[f'{RATIO_TO_PREDICT}_close'], main_df['future']))
 
+times = sorted(main_df.index.values)  # get the times
+last_5pct = sorted(main_df.index.values)[-int(0.05*len(times))]  # get the last 5% of the times
+
+validation_main_df = main_df[(main_df.index >= last_5pct)]  # make the validation data where the index is in the last 5%
+main_df = main_df[(main_df.index < last_5pct)]  # now the main_df is all the data up to the last 5%
+
 print(main_df.head())
