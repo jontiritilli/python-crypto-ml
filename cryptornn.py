@@ -77,7 +77,6 @@ def preprocess_df(df):
 
 main_df = pd.DataFrame() # new empty dataframe
 
-# ratios = ["BTC-USD", "ETH-USD", "XRP-USD", "LTC-USD"] # the 4 ratios we want to consider
 ratios = ["BTC-USD", "ETH-USD", "XRP-USD"] # the 4 ratios we want to consider
 
 # generate set of data and merge each ratio into single csv
