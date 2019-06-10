@@ -75,9 +75,11 @@ def preprocess_df(df):
 
 # END FUNCTION DECLERATIONS
 
+# DATA PREPERATION
+
 main_df = pd.DataFrame() # new empty dataframe
 
-ratios = ["BTC-USD", "ETH-USD", "XRP-USD"] # the 4 ratios we want to consider
+ratios = ["BTC-USD", "ETH-USD", "XRP-USD"] # the ratios we want to consider
 
 # generate set of data and merge each ratio into single csv
 for ratio in ratios:  # begin iteration
@@ -101,7 +103,7 @@ main_df.dropna(inplace=True)
 
 main_df['future'] = main_df[f'{RATIO_TO_PREDICT}_close'].shift(-FUTURE_PERIOD_PREDICT)
 main_df['target'] = list(map(classify, main_df[f'{RATIO_TO_PREDICT}_close'], main_df['future']))
-main_df = main_df[:-3]
+
 times = sorted(main_df.index.values)  # get the times
 last_5pct = sorted(main_df.index.values)[-int(0.05*len(times))]  # get the last 5% of the times
 # print(f'last 5% {last_5pct}')
