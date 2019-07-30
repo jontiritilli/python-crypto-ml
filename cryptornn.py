@@ -1,9 +1,14 @@
-import pandas as pd
 from collections import deque
+import pandas as pd
 import random
-from datetime import datetime
-import time
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+# import tensorflow.compat.v1.keras.layers.CuDNNLSTM
+from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import ModelCheckpoint, ModelCheckpoint
+import time
 from sklearn import preprocessing
 
 # CONSTANTS
@@ -11,6 +16,9 @@ from sklearn import preprocessing
 SEQ_LEN = int(60)  # how long of a preceeding sequence to collect for RNN
 FUTURE_PERIOD_PREDICT = int(3)  # how far into the future are we trying to predict?
 RATIO_TO_PREDICT = "XRP-USD"
+EPOCHS = 10  # how many passes through our data
+BATCH_SIZE = 64  # how many batches? Try smaller batch if you're getting OOM (out of memory) errors.
+NAME = f"{SEQ_LEN}-SEQ-{FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"  # a unique name for the model
 
 # END CONSTANTS
 
@@ -83,7 +91,6 @@ ratios = ["BTC-USD", "ETH-USD", "XRP-USD"] # the ratios we want to consider
 
 # generate set of data and merge each ratio into single csv
 for ratio in ratios:  # begin iteration
-    print(ratio)
     dataset = f'./data/{ratio}.csv'  # get the full path to the file.
     df = pd.read_csv(dataset, names=['time', 'symbol', 'open', 'high', 'low', 'close', 'volume', 'vol_usd'])  # read in specific file
     df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %I-%p')
@@ -104,6 +111,8 @@ main_df.dropna(inplace=True)
 main_df['future'] = main_df[f'{RATIO_TO_PREDICT}_close'].shift(-FUTURE_PERIOD_PREDICT)
 main_df['target'] = list(map(classify, main_df[f'{RATIO_TO_PREDICT}_close'], main_df['future']))
 
+main_df.dropna(inplace=True)
+
 times = sorted(main_df.index.values)  # get the times
 last_5pct = sorted(main_df.index.values)[-int(0.05*len(times))]  # get the last 5% of the times
 # print(f'last 5% {last_5pct}')
@@ -117,3 +126,51 @@ print(f"train data: {len(train_x)} validation: {len(validation_x)}")
 print(f"Dont buys: {train_y.count(0)}, buys: {train_y.count(1)}")
 print(f"VALIDATION Dont buys: {validation_y.count(0)}, buys: {validation_y.count(1)}")
 
+# BEGIN TRAINING
+
+model = Sequential()
+model.add(LSTM(128, input_shape=(train_x.shape[1:]), return_sequences=True))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())  #normalizes activation outputs, same reason you want to normalize your input data.
+
+model.add(LSTM(128, return_sequences=True))
+model.add(Dropout(0.1))
+model.add(BatchNormalization())
+
+model.add(LSTM(128))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
+
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.2))
+
+model.add(Dense(2, activation='softmax'))
+
+opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
+
+# Compile model
+model.compile(
+    loss='sparse_categorical_crossentropy',
+    optimizer=opt,
+    metrics=['accuracy']
+)
+
+tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
+
+filepath = "RNN_Final-{epoch:02d}-{val_acc:.3f}"  # unique file name that will include the epoch and the validation acc for that epoch
+checkpoint = ModelCheckpoint("models/{}.model".format(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')) # saves only the best ones
+
+# Train model
+history = model.fit(
+    train_x, train_y,
+    batch_size=BATCH_SIZE,
+    epochs=EPOCHS,
+    validation_data=(validation_x, validation_y),
+    callbacks=[tensorboard, checkpoint],
+)
+# Score model
+score = model.evaluate(validation_x, validation_y, verbose=0)
+print('Test loss:', score[0])
+print('Test accuracy:', score[1])
+# Save model
+model.save("models/{}".format(NAME))
