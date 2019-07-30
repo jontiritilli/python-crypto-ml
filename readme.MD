@@ -12,13 +12,15 @@
 
 
 ## To-Do
-- [ ] Develop basic algorithm that can predict prices with a reasonable margin of error
-- [ ] Add instructions to readme
-- [ ] Fix output formatting in instructions
-- [ ] Research deploying in a Docker/Docker Swarm to improve efficiency
-- [ ] Add automatic scrape/addition of data to models daily/hourly/minute
-- [ ] Develop user interface to monitor and obtain data as needed
+- [x] Develop basic algorithm that can predict prices with a reasonable margin of error
+- [x] Add instructions to readme
+- [x] Fix output formatting in instructions
+- [ ] Research converting generated models to .pb files for serving
+- [ ] Fix the serving script and Docker file
+- [ ] Figure out how to run on the server (intensive)
+- [ ] Develop user interface to interact with POST endpoints in TensorServe
 - [ ] Deploy algorithm and UI to web
+- [ ] Obtain data weekly/monthly to retrain model
 - [ ] Add Sentiment analysis
 - [ ] Add Blockchain monitoring
 
@@ -26,6 +28,7 @@
 ### Pre-requisites
   1. Have Python 3.3 installed and available.
       * Should able to access python from your command-line
+  1. Install all dependencies *(Look in the .py file or follow errors in terminal at run)*
 ### Install and Run
 > This process will be evolving over the course of the project. Expected to be complete at each phase.
   1. **From the Command Line** install necessary packages, if you haven't already.
@@ -38,3 +41,5 @@
       ```
       python3 cryptornn.py
       ```
+### Models and Data
+  > In order to see the data models that have been generated, please use the **serveTensorboard .sh** script. This will serve on [localhost:6006](localhost:6006)
